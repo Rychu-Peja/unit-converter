@@ -1,121 +1,117 @@
-'use client';
+import React, { useState } from "react";
 
-import { useState } from "react";
+const Converter = () => {
+  const [inputValue, setInputValue] = useState(""); // Wartość wejściowa
+  const [fromUnit, setFromUnit] = useState("mile"); // Jednostka początkowa
+  const [toUnit, setToUnit] = useState("km"); // Jednostka docelowa
+  const [result, setResult] = useState(null); // Wynik
 
-export default function Converter() {
-  const [inputValue, setInputValue] = useState("");
-  const [fromUnit, setFromUnit] = useState("mile");
-  const [toUnit, setToUnit] = useState("km");
-  const [result, setResult] = useState(null);
-
-  const unitCategories = {
-    length: ["mile", "km", "foot", "inch"],
-    mass: ["kg", "pound", "gram", "ounce", "dag"],
-    volume: ["liter", "milliliter", "gallon"]
+  // Rozszerzona lista współczynników konwersji
+  const conversionRates = {
+    mile: 1,          // baza (mile)
+    km: 1.60934,      // ile km w 1 mili
+    meter: 1609.34,
+    foot: 5280,
+    yard: 1760,
+    inch: 63360,
+    centimeter: 160934,
+    millimeter: 1609340,
+    nauticalmile: 0.868976,
   };
 
-  const pluralize = (value, unit) => {
-    if (value === 1) return unit; // Liczba pojedyncza
-    if (unit === "mile") return "miles";
-    if (unit === "foot") return "feet";
-    if (unit === "inch") return "inches";
-    if (unit === "pound") return "pounds";
-    if (unit === "ounce") return "ounces";
-    if (unit === "liter") return "liters";
-    if (unit === "milliliter") return "milliliters";
-    if (unit === "gallon") return "gallons";
-    if (unit === "gram") return "grams";
-    if (unit === "dag") return "dekagrams";
-    if (unit === "kg") return "kilograms";
-    if (unit === "km") return "kilometers";
-    return unit; // Domyślnie zwróć jednostkę
-  };
+  const handleConvert = (e) => {
+    e.preventDefault(); // Zapobiega odświeżeniu strony
 
-  const handleConvert = () => {
-    let conversion = 0;
+    // Sprawdzenie poprawności wejścia
+    if (!inputValue || isNaN(inputValue)) {
+      setResult("Invalid input, please enter a valid number.");
+      return;
+    }
 
-    // Konwersje długości
-    if (fromUnit === "mile" && toUnit === "km") conversion = parseFloat(inputValue) * 1.60934;
-    else if (fromUnit === "km" && toUnit === "mile") conversion = parseFloat(inputValue) / 1.60934;
-    else if (fromUnit === "foot" && toUnit === "inch") conversion = parseFloat(inputValue) * 12;
-    else if (fromUnit === "inch" && toUnit === "foot") conversion = parseFloat(inputValue) / 12;
+    const value = parseFloat(inputValue);
+    const fromRate = conversionRates[fromUnit];
+    const toRate = conversionRates[toUnit];
 
-    // Konwersje masy
-    else if (fromUnit === "kg" && toUnit === "pound") conversion = parseFloat(inputValue) * 2.20462;
-    else if (fromUnit === "pound" && toUnit === "kg") conversion = parseFloat(inputValue) / 2.20462;
-    else if (fromUnit === "gram" && toUnit === "ounce") conversion = parseFloat(inputValue) / 28.3495;
-    else if (fromUnit === "ounce" && toUnit === "gram") conversion = parseFloat(inputValue) * 28.3495;
-    else if (fromUnit === "dag" && toUnit === "gram") conversion = parseFloat(inputValue) * 10;
-    else if (fromUnit === "gram" && toUnit === "dag") conversion = parseFloat(inputValue) / 10;
+    if (!fromRate || !toRate) {
+      setResult("Conversion rate not found for the selected units.");
+      return;
+    }
 
-    // Konwersje objętości
-    else if (fromUnit === "liter" && toUnit === "milliliter") conversion = parseFloat(inputValue) * 1000;
-    else if (fromUnit === "milliliter" && toUnit === "liter") conversion = parseFloat(inputValue) / 1000;
-    else if (fromUnit === "gallon" && toUnit === "liter") conversion = parseFloat(inputValue) * 3.78541;
-    else if (fromUnit === "liter" && toUnit === "gallon") conversion = parseFloat(inputValue) / 3.78541;
+    // Obliczenie wyniku
+    const converted = (value * fromRate) / toRate;
 
-    else conversion = inputValue; // Gdy jednostki są takie same
-
-    setResult(conversion.toFixed(2));
-  };
-
-  const handleFromUnitChange = (value) => {
-    setFromUnit(value);
-    const category = Object.entries(unitCategories).find(([_, units]) => units.includes(value))[0];
-    setToUnit(unitCategories[category][0]);
+    // Ustawienie wyniku z większą liczbą miejsc po przecinku (5 miejsc)
+    setResult(`${value} ${fromUnit} is equal to ${converted.toFixed(5)} ${toUnit}`);
   };
 
   return (
-    <div className="bg-gray p-8 rounded shadow-md w-full max-w-md mx-auto text-gray-400">
-      <h1 className="text-2xl font-bold mb-4 text-center text-gray-200">Unit Converter</h1>
-      <div className="mb-4">
-        <input
-          type="number"
-          placeholder="Enter value"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          className="w-full p-2 mb-2 border border-gray-300 rounded text-black"
-        />
-        <div className="flex justify-between">
-          <select
-            value={fromUnit}
-            onChange={(e) => handleFromUnitChange(e.target.value)}
-            className="w-1/2 p-2 border border-gray-300 rounded text-black mr-2"
-          >
-            {Object.values(unitCategories).flat().map((unit) => (
-              <option key={unit} value={unit}>
-                {unit}
-              </option>
-            ))}
-          </select>
-          <select
-            value={toUnit}
-            onChange={(e) => setToUnit(e.target.value)}
-            className="w-1/2 p-2 border border-gray-300 rounded text-black"
-          >
-            {unitCategories[
-              Object.entries(unitCategories).find(([_, units]) => units.includes(fromUnit))[0]
-            ].map((unit) => (
-              <option key={unit} value={unit}>
-                {unit}
-              </option>
-            ))}
-          </select>
+    <div>
+      <h1 className="text-3xl font-bold text-center mb-6">Unit Converter</h1>
+      <form className="space-y-6" onSubmit={handleConvert}>
+        <div>
+          <label className="block mb-1 text-sm font-semibold" htmlFor="value">
+            Enter Value:
+          </label>
+          <input
+            id="value"
+            type="number"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="w-full p-3 border border-gray-700 rounded-md bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100"
+            placeholder="Enter a number"
+          />
         </div>
-      </div>
-      <button
-        onClick={handleConvert}
-        className="w-full bg-gray-400 text-white py-2 rounded hover:bg-gray-600 text-black"
-      >
-        Convert
-      </button>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1 text-sm font-semibold" htmlFor="fromUnit">
+              Convert From:
+            </label>
+            <select
+              id="fromUnit"
+              value={fromUnit}
+              onChange={(e) => setFromUnit(e.target.value)}
+              className="w-full p-3 border border-gray-700 rounded-md bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100"
+            >
+              {Object.keys(conversionRates).map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 text-sm font-semibold" htmlFor="toUnit">
+              Convert To:
+            </label>
+            <select
+              id="toUnit"
+              value={toUnit}
+              onChange={(e) => setToUnit(e.target.value)}
+              className="w-full p-3 border border-gray-700 rounded-md bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-100"
+            >
+              {Object.keys(conversionRates).map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold py-3 px-4 rounded-md shadow-md hover:opacity-80 focus:opacity-80 active:scale-95 transition-transform duration-200"
+        >
+          Convert
+        </button>
+      </form>
+      {/* Wyświetlenie wyniku */}
       {result && (
-        <div className="mt-4 text-center">
-          <p className="text-lg font-bold">
-            {inputValue} {pluralize(inputValue, fromUnit)} is equal to {result} {pluralize(result, toUnit)}
-          </p>
+        <div className="mt-4 p-4 text-center rounded-md bg-gray-700 text-gray-100">
+          <p className="text-lg font-semibold">{result}</p>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default Converter;
